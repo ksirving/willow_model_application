@@ -6,64 +6,66 @@ library(lubridate)
 library(tidyverse)
 
 ### data upload
-inund <- read.csv("input_data/inundation.csv")
-
+shear <- read.csv("input_data/shear.csv", skip = 2)
+head(shear)
 ######## seedling inudation curve from data predicting percent mortality from duration and depth Halsell et al and Vandersande et al
 
 
-inund <- inund %>% 
-  filter(species == "Salix gooddingii")
-
-head(inund)
-
-ggplot(data = inund, mapping = aes(x = depth_cm, y = mortality_prec))+
-  geom_point(size = 2)+
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
-  labs(x = "Depth (cm)", y = "Mortality (%)")+
+names(shear)[c(1,4)] <- c("shear", "mortality")
+shear$year <- as.factor(shear$year)
+ggplot(data = shear, mapping = aes(x = shear, y = mortality))+
+  geom_point(size = 4)+
+  geom_smooth(method = "lm")+
+  labs(y = "Mortality (%)", x = "Bed Shear Stress (Pa)")+
   theme_classic()+
   theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
 
-summary(depth_seedling_mod <- lm(mortality_prec ~ depth_cm + I(depth_cm^2), data = inund))
+summary(shear_seedling <- lm(mortality~shear, data = shear))
 
-save(depth_seedling_mod, file = "models/depth_seedling_mod.rda")
+save(shear_seedling, file= "shear_seedling.rda")
+
 
 ## upload hydraulic data
 
 hydraul <- read.csv("input_data/demo_ts_F57C.csv")
+head(hydraul)
+names(hydraul)
 ## select columns
-hyd_dep <- hydraul[,c(1:3,9)]
-colnames(hyd_dep)[4] <-"depth_ft"
+hyd_shear <- hydraul[,c(1:3,10)]
+colnames(hyd_shear)[4] <-"shear_lb_sq_ft"
 
 ## convert unit from feet to meters
-hyd_dep$depth_cm <- (hyd_dep$depth_ft*0.3048)*100
-head(hyd_dep)
-range(hyd_dep$depth_cm)
+hyd_shear$shear<- (hyd_shear$shear_lb_sq_ft/0.020885)
+head(hyd_shear)
+range(hyd_shear$shear) ## 0.00000 3.40937
 
-## plot depth v Q rating curve
-plot(hyd_dep$Q, hyd_dep$depth_cm,  main = "F57C: Depth ~ Q", xlab="Q (cfs)", ylab="Depth (cm)")
+## plot shearth v Q rating curve
+plot(hyd_shear$Q, hyd_shear$shear,  main = "F57C: Shear Stress ~ Q", xlab="Q (cfs)", ylab="Shear Stress (Pa)")
 
-
+hyd_shear$date_num <- seq(1,length(hyd_shear$DateTime), 1)
+plot(hyd_shear$date_num, hyd_shear$shear, type="n")
+lines(hyd_shear$date_num, hyd_shear$shear)
 
 ## predict on node data using model
-names(hyd_dep)
-names(inund)
-head(inund)
+names(hyd_shear)
+names(shear)
+head(shear)
 
 ## workflow
-## get probabilities for depth at each hourly time step
+## get probabilities for shearth at each hourly time step
 ## get thresholds i.e. 25, 50, 75%
 
-head(hyd_dep)
-summary(depth_seedling_mod)
+head(hyd_shear)
+summary(shear_seedling)
 
-new_data <- hyd_dep %>%
-  select(c(DateTime, Q, depth_cm, date_num)) %>%
-  mutate(prob_fit = predict(depth_seedling_mod, newdata = hyd_dep)) %>%
+new_data <- hyd_shear %>%
+  select(c(DateTime, Q, shear, date_num)) %>%
+  mutate(prob_fit = predict(shear_seedling, newdata = hyd_shear)) %>%
   mutate(prob_fit = ifelse(prob_fit >100, 100, prob_fit)) ## percentage goes up to 200 so cut off at 100
-  
+
 head(new_data)
 
-save(new_data, file="output_data/M1_F57C_seedling_inundation_discharge_probability_time_series_red_columns.RData")
+save(new_data, file="output_data/M2_F57C_seedling_shear_discharge_probability_time_series_red_columns.RData")
 
 # format probability time series ------------------------------------------
 
@@ -82,16 +84,16 @@ new_data <- new_data %>%
   mutate(year = year(DateTime))%>%
   mutate(day = day(DateTime))%>%
   mutate(hour = hour(DateTime))
-  
+
 
 head(new_data)
 
-save(new_data, file="output_data/M1_F57C_seedling_inundation_discharge_probs_2010_2017_TS.RData")
+save(new_data, file="output_data/M1_F57C_seedling_shear_discharge_probs_2010_2017_TS.RData")
 
 # probability as a function of discharge -----------------------------------
 
 
-load( file="output_data/M1_F57C_seedling_inundation_discharge_probs_2010_2017_TS.RData")
+load( file="output_data/M1_F57C_seedling_shear_discharge_probs_2010_2017_TS.RData")
 head(new_data)
 
 ## plot
@@ -105,13 +107,13 @@ spl <- smooth.spline(new_data$prob_fit ~ new_data$Q)
 peak <- filter(new_data, prob_fit == max(prob_fit)) #%>%
 peakQ <- select(peak, Q)
 peakQ  <- peakQ[1,1]
-peakQ ## 790.4
+peakQ ## 998.84
 
 ## function for each probability
 
-newymid <- 50
+newymid <- 25
 newxmid <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newymid,
-                      interval = c(min(new_data$Q), peakQ))$root, silent=T)
+                       interval = c(min(new_data$Q), peakQ))$root, silent=T)
 
 # ## if no value, return an NA
 # newxmid <- ifelse(class(newx) == "try-error",  NA, newx1a)
@@ -145,7 +147,7 @@ newxmid <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newymid,
 # newx3b <- ifelse(class(newx3b) == "try-error",  NA, newx3b)
 
 
-plot(new_data$Q, new_data$prob_fit, type="n", main = "Seedling/Inundation: Probability according to Q", xlab="Q (cfs)", ylab="Mortality (%)")
+plot(new_data$Q, new_data$prob_fit, type="n", main = "Seedling/Shear Stress: Probability according to Q", xlab="Q (cfs)", ylab="Mortality (%)")
 lines(spl, col="black")
 points(newxmid, newymid, col="red", pch=19) # 50%
 # points(newx2b, newy2b, col="red", pch=19) # 0.2
@@ -154,7 +156,7 @@ points(newxmid, newymid, col="red", pch=19) # 50%
 # points(newx3a, newy3a, col="blue", pch=19) # 0.3 - lower limit
 # points(newx3b, newy3b, col="blue", pch=19) # 0.3 - upper limit
 
-plot(new_data$depth_cm, new_data$prob_fit, main = "Seedling/Inundation: Probability according to Depth (cm)", xlab="Depth (cm)", ylab="Mortality (%)")
+plot(new_data$shear, new_data$prob_fit, main = "Seedling/Shear Stress: Mortality according to Shear Stress (Pa)", xlab="Shear Stress (Pa)", ylab="Mortality (%)")
 
 
 ### plot discharge over time
@@ -304,7 +306,7 @@ library(scales)
 library(data.table)
 
 
-load( file="output_data/M1_F57C_seedling_inundation_discharge_probs_2010_2017_TS.RData")
+load( file="output_data/M1_F57C_seedling_shear_discharge_probs_2010_2017_TS.RData")
 head(new_data)
 
 ## define thresholds again
@@ -318,10 +320,10 @@ spl <- smooth.spline(new_data$prob_fit ~ new_data$Q)
 peak <- filter(new_data, prob_fit == max(prob_fit)) #%>%
 peakQ <- select(peak, Q)
 peakQ  <- peakQ[1,1]
-peakQ ## 790.4
+peakQ ## 998.84
 
 ## function for each probability
-newymid <- 50
+newymid <- 25 ## because prob range is only 20-30%
 newxmid <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newymid,
                        interval = c(min(new_data$Q), peakQ))$root, silent=T)
 
@@ -425,7 +427,7 @@ ggplot(melt_days, aes(x =month_year, y=n_days)) +
   scale_x_continuous(breaks=as.numeric(melt_days$month_year), labels=format(melt_days$month_year,"%b %Y")) +
   # facet_wrap(~year, scales="free_x", nrow=2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  labs(title = "Number of days within discharge limit in relation to Depth",
+  labs(title = "Number of days within discharge limit in relation to Shear Stress",
        y = "Number of days per Month",
        x = "Month") #+ theme_bw(base_size = 15)
 
@@ -439,7 +441,7 @@ ggplot(melt_days, aes(x =month_year, y=n_days)) +
   scale_x_continuous(breaks=as.numeric(melt_days$month_year), labels=format(melt_days$month_year,"%b %Y")) +
   facet_wrap(~year, scales="free_x", nrow=2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  labs(title = "Number of days within discharge limit in relation to Depth",
+  labs(title = "Number of days within discharge limit in relation to Shear Stress",
        y = "Number of days per Month",
        x = "Month") #+ theme_bw(base_size = 15)
 
@@ -451,7 +453,7 @@ ggplot(melt_days, aes(x =month_year, y=n_days)) +
   scale_x_continuous(breaks=as.numeric(melt_days$month_year), labels=format(melt_days$month_year,"%b %Y")) +
   facet_wrap(~season, scales="free_x", nrow=2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  labs(title = "Number of days within discharge limit in relation to Depth",
+  labs(title = "Number of days within discharge limit in relation to Shear Stress",
        y = "Number of days per Month",
        x = "Month") #+ theme_bw(base_size = 15)
 
