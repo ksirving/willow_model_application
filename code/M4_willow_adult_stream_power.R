@@ -13,7 +13,7 @@ hyd_dep <- hydraul[,c(1:3,11)]
 colnames(hyd_dep)[4] <-"stream_power_lb_ft"
 
 ## convert unit from lb ft s to w/m2
-hyd_dep$stream_power_wm2 <- (hyd_dep$stream_power_lb_ft/1.36)*0.3048
+hyd_dep$stream_power_wm2 <- (hyd_dep$stream_power_lb_ft*4.44822)/0.3048
 
 ## format date time
 hyd_dep$DateTime<-as.POSIXct(hyd_dep$DateTime,
@@ -34,33 +34,47 @@ hyd_dep <- hyd_dep %>%
 plot(hyd_dep$Q, hyd_dep$stream_power_wm2)
 
 ## plot
-range(hyd_dep$Q) ## 0.00 998.845 
+range(hyd_dep$Q) ## 0.00 998.845
+range(hyd_dep$stream_power_lb_ft)
 
 ## smooth spline the curve to get exact value of discharge at a given probability
-spl <- smooth.spline(hyd_dep$stream_power_lb_ft ~ hyd_dep$Q)
+spl <- smooth.spline(hyd_dep$stream_power_wm2 ~ hyd_dep$Q)
 
-## find discharge point at 5cm 
+## find discharge point at 20 w/m2 & 4000 w/m2
 
-newy5 <- 5
-newx5 <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newy5,
+newy20 <- 20
+newx20 <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newy20,
                      interval = c(min(hyd_dep$Q), max(hyd_dep$Q)))$root, silent=T)
-newx5 ## 1.521938
 
+## if no value, return an NA
+newx20 <- ifelse(class(newx20) == "try-error",  NA, newx20)
+
+
+newy4000 <- 4000
+newx4000 <- try(uniroot(function(x) predict(spl, x, deriv = 0)$y - newy4000,
+                      interval = c(min(hyd_dep$Q), max(hyd_dep$Q)))$root, silent=T)
+## if no value, return an NA
+newx4000 <- ifelse(class(newx4000) == "try-error",  NA, newx4000)
+
+newx4000 
 ### define suitable years through if else statement
-###	IF depth exceeds 5cm for >85 and <280 days, Suitable - in Q
+###	IF stream power less than 20 or more than 4000 unsuitable
 
 head(hyd_dep)
 
-plot(hyd_dep$Q, hyd_dep$depth_cm, type="n", main = "Willow/Germination: Depth according to Q", xlab="Q (cfs)", ylab="Depth (cm)")
+plot(hyd_dep$Q, hyd_dep$stream_power_wm2, type="n", main = "Willow/Adult: Stream Power according to Q", xlab="Q (cfs)", ylab="Stream Power (W/m2)")
 lines(spl, col="black")
-points(newx5, newy5, col="red", pch=19) # 5cm
+points(newx20, newy20, col="red", pch=19) # 20
+points(newx4000, newy4000, col="red", pch=19) # 20
+
 
 ### percentage of time above threshold
 
 time_stats <- hyd_dep %>%
   dplyr::group_by(year) %>%
-  dplyr::mutate(Threshold = sum(Q >= newx5)/length(DateTime)*100) %>%
-  distinct(year, Threshold)
+  dplyr::mutate(Threshold2 = sum(Q >= newx20)/length(DateTime)*100) %>%
+  dplyr::mutate(Threshold4 = sum(Q <= newx4000)/length(DateTime)*100) %>%
+  distinct(year, Threshold2, Threshold4)
 
 time_stats
 
@@ -84,9 +98,11 @@ hyd_dep <- hyd_dep %>%
   mutate(water_year = ifelse(month == 10 | month == 11 | month == 12, year, year-1))
 
 new_data <- hyd_dep %>%
-  group_by(month, day, water_year, ID = data.table::rleid(Q >= newx5)) %>%
-  mutate(threshold5 = if_else(Q >= newx5,  row_number(), 0L))
-
+  group_by(month, day, water_year, ID = data.table::rleid(Q >= newx20)) %>%
+  mutate(threshold20 = if_else(Q >= newx20,  row_number(), 0L)) %>%
+  ungroup() %>%
+  group_by(month, day, water_year, ID = data.table::rleid(Q <= newx4000)) %>%
+  mutate(threshold4000 = if_else(Q >= newx4000,  row_number(), 0L))
 
 head(new_data)
 
@@ -94,11 +110,8 @@ head(new_data)
 ## select only columns needed - Q, month, year, day all IDs and probs
 # names(new_data)
 
-new_datax <- select(new_data, c(Q, month, water_year, year, day, ID, threshold5) ) # all probs
+new_datax <- select(new_data, c(Q, month, water_year, year, day, ID, threshold20, threshold4000) ) # all probs
 names(new_datax)
-
-
-
 
 ## melt
 melt_data<-reshape2::melt(new_datax, id=c("ID", "day", "month", "year", "Q", "water_year"))
@@ -123,6 +136,6 @@ total_days_per_year01 <- total_days01 %>%
   summarise(days_per_water_year = sum(n_days)) %>%
   mutate(suitablility = ifelse(days_per_water_year >= 85 & days_per_water_year <= 280, "Yes", "No"))
 
-write.csv(total_days_per_year01, "output_data/M3_willow_germ_days_per_year_suiability.csv")
+write.csv(total_days_per_year01, "output_data/M3_willow_adult_stream_power_days_per_year_suiability.csv")
 
 
