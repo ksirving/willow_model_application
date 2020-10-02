@@ -53,6 +53,11 @@ head(inund)
 ## get probabilities for depth at each hourly time step
 ## get thresholds i.e. 25, 50, 75%
 
+hyd_dep$date_num <- seq(1,length(hyd_dep$DateTime), 1)
+plot(hyd_shear$date_num, hyd_shear$shear, type="n")
+lines(hyd_shear$date_num, hyd_shear$shear)
+
+
 head(hyd_dep)
 summary(depth_seedling_mod)
 

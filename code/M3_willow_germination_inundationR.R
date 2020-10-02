@@ -5,29 +5,73 @@ library(lubridate)
 
 ## upload hydraulic data
 
-## upload hydraulic data
 
-hydraul <- read.csv("input_data/demo_ts_F57C.csv")
+# F57C <- read.csv("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas/hydraulic_ts_F57C.csv")
+# LA8 <- read.csv("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas/hydraulic_ts_LA8.csv")
+LA11 <- read.csv("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas/hydraulic_ts_LA11.csv")
+# LA20 <- read.csv("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas/hydraulic_ts_LA20_2.csv")
+
+## go through script one at a time
+## go through script one at a time
+
+hydraul <- LA11[,-1]
+names(hydraul)
 head(hydraul)
+## select columns
 
-hyd_dep <- hydraul[,c(1:3,9)]
-colnames(hyd_dep)[4] <-"depth_ft"
+hyd_dep <- hydraul[,c(1:3,5,9,13)]
+colnames(hyd_dep) <-c("DateTime", "node", "Q", "depth_ft_LOB", "depth_ft_MC", "depth_ft_ROB")
 
 ## convert unit from feet to meters
-hyd_dep$depth_cm <- (hyd_dep$depth_ft*0.3048)*100
+
+hyd_dep <- hyd_dep %>%
+  mutate(depth_cm_LOB = (depth_ft_LOB*0.3048)*100,
+         depth_cm_MC = (depth_ft_MC*0.3048)*100,
+         depth_cm_ROB = (depth_ft_ROB*0.3048)*100) %>%
+  select(-contains("ft")) %>%
+  mutate(date_num = seq(1,length(DateTime), 1))
+
+# ## melt channel position data
+hyd_dep<-reshape2::melt(hyd_dep, id=c("DateTime","Q", "node", "date_num"))
+
+
+labels <- c(depth_cm_LOB = "Left Over Bank", depth_cm_MC = "Main Channel", depth_cm_ROB = "Right Over Bank")
+
+## workflow
+## get probabilities for depth at each hourly time step
+## get thresholds i.e. 25, 50, 75%
+
+hyd_dep$date_num <- seq(1,length(hyd_dep$DateTime), 1)
+
+head(hyd_dep)
+summary(depth_seedling_mod)
+
+new_data <- hyd_dep %>%
+  select(c(DateTime, Q, depth_cm, date_num)) %>%
+  mutate(prob_fit = predict(depth_seedling_mod, newdata = hyd_dep)) %>%
+  mutate(prob_fit = ifelse(prob_fit >100, 100, prob_fit)) ## percentage goes up to 200 so cut off at 100
+
+head(new_data)
+
+# format probability time series ------------------------------------------
+
+## look at data using lubridate etc
 
 ## format date time
-hyd_dep$DateTime<-as.POSIXct(hyd_dep$DateTime,
+new_data$DateTime<-as.POSIXct(new_data$DateTime,
                               format = "%Y-%m-%d %H:%M",
-                              tz = "America/Los_Angeles")
+                              tz = "GMT")
 
 ## create year, month, day and hour columns
 
-hyd_dep <- hyd_dep %>%
-  mutate(month = month(DateTime))%>%
-  mutate(year = year(DateTime))%>%
-  mutate(day = day(DateTime))%>%
+new_data <- new_data %>%
+  mutate(month = month(DateTime)) %>%
+  mutate(year = year(DateTime)) %>%
+  mutate(day = day(DateTime)) %>%
   mutate(hour = hour(DateTime))
+
+head(new_data)
+
 
 ## define thresholds for germination
 
