@@ -13,6 +13,7 @@ head(shear)
 
 names(shear)[c(1,4)] <- c("shear", "mortality")
 shear$year <- as.factor(shear$year)
+
 ggplot(data = shear, mapping = aes(x = shear, y = mortality))+
   geom_point(size = 4)+
   geom_smooth(method = "lm")+
