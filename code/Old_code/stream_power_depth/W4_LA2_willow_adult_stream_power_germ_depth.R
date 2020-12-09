@@ -11,11 +11,11 @@ library(gridExtra) # tile several plots next to each other
 library(scales)
 library(data.table)
 
-F57C <- read.csv("input_data/HecRas/hydraulic_ts_F57C.csv")
+# F57C <- read.csv("input_data/HecRas/hydraulic_ts_F57C.csv")
 # LA8 <- read.csv("input_data/HecRas/hydraulic_ts_LA8.csv")
 # LA11 <- read.csv("input_data/HecRas/hydraulic_ts_LA11.csv")
 # LA20_2 <- read.csv("input_data/HecRas/hydraulic_ts_LA20_2.csv")
-# F37B_Low <- read.csv("input_data/HecRas/hydraulic_ts_F37B_Low.csv")
+F37B_Low <- read.csv("input_data/HecRas/hydraulic_ts_F37B_Low.csv")
 # LA2 <- read.csv("input_data/HecRas/hydraulic_ts_LA2.csv")
 # LA3 <- read.csv("input_data/HecRas/hydraulic_ts_LA3.csv")
 # LA14 <- read.csv("input_data/HecRas/hydraulic_ts_LA14.csv")
@@ -38,7 +38,7 @@ LA20_2 <- LA20_2 %>%
   mutate(Q_ts.datetime = F34D$Q_ts.datetime)
 
 
-hydraul <- F57C[,-1]
+hydraul <- F37B_Low[,-1]
 names(hydraul)
 
 ## change some names
@@ -165,7 +165,7 @@ limits$ROB <- c(newx1aR[1],
                 newx2aR[1])
 limits
 
-write.csv(limits, "output_data/W4_F57C_willow_adult_stream_power_Q_limits.csv")
+write.csv(limits, "output_data/W4_F37B_Low_willow_adult_stream_power_Q_limits.csv")
 ### percentage of time above threshold
 
 
@@ -235,7 +235,7 @@ time_statsr <- new_dataRx %>%
 time_stats <- rbind(time_statsm, time_statsl, time_statsr)
 
 time_stats
-write.csv(time_stats, "output_data/W4_F57C_time_stats_willow_adult_stream_power.csv")
+write.csv(time_stats, "output_data/W4_F37B_Low_time_stats_willow_adult_stream_power.csv")
 
 
 # Number of days above discharge ------------------------------------------
@@ -292,7 +292,7 @@ total_days_per_year01 <- total_days01 %>%
 
 total_days_per_year01
 
-write.csv(total_days_per_year01, "output_data/W4_F57C_number_of_days_willow_adult_stream_power.csv")
+write.csv(total_days_per_year01, "output_data/W4_F37B_Low_number_of_days_willow_adult_stream_power.csv")
 
 
 # Depth -------------------------------------------------------------------
@@ -350,13 +350,13 @@ limits$MC <- c(newx1a[1])
 limits$ROB <- c(newx1aR[1])
 limits
 
-write.csv(limits, "output_data/W4_F57C_willow_germ_depth_Q_limits.csv")
+write.csv(limits, "output_data/W4_F37B_Low_willow_germ_depth_Q_limits.csv")
 ### percent
 
 ## plot with thresholds
 labels <- c(depth_cm_LOB = "Left Over Bank", depth_cm_MC = "Main Channel", depth_cm_ROB = "Right Over Bank")
 
-png("figures/Application_curves/Depth/F57C_willow_germ_Depth_Q.png", width = 500, height = 600)
+png("figures/Application_curves/Depth/F37B_Low_willow_germ_Depth_Q.png", width = 500, height = 600)
 
 ggplot(hyd_dep, aes(x = Q, y=value)) +
   geom_line(aes( group = variable, lty = variable)) +
@@ -369,7 +369,7 @@ ggplot(hyd_dep, aes(x = Q, y=value)) +
   geom_point(data = subset(hyd_dep, variable =="depth_cm_ROB"), aes(y=5, x=newx1aR), color="green") +
   
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none") +
-  labs(title = "F57C: Depth ~ Q",
+  labs(title = "F37B_Low: Depth ~ Q",
        y = "Depth (cm)",
        x = "Q (cfs)") #+ theme_bw(base_size = 15)
 
@@ -442,7 +442,7 @@ time_stats <-time_stats %>%
 melt_time<-reshape2::melt(time_stats, id=c("water_year", "position"))
 melt_time <- rename(melt_time, Time_Period = variable)
 head(melt_time)
-write.csv(melt_time, "output_data/W4_F57C_willow_germ_depth_time_stats.csv")
+write.csv(melt_time, "output_data/W4_F37B_Low_willow_germ_depth_time_stats.csv")
 
 # Number of days above discharge ------------------------------------------
 
@@ -520,8 +520,8 @@ total_days <- total_days_per_month01
 head(total_days)
 total_days_year <- total_days_per_year01
 
-write.csv(total_days, "output_data/W4_F57C_willow_germ_depth_total_days.csv")
-write.csv(total_days_year, "output_data/F5_F57C_willow_germ_depth_total_days_year.csv")
+write.csv(total_days, "output_data/W4_F37B_Low_willow_germ_depth_total_days.csv")
+write.csv(total_days_year, "output_data/W4_F37B_Low_willow_germ_depth_total_days_year.csv")
 
 # # create water_year_month column       
 total_days <- ungroup(total_days) %>%
@@ -553,7 +553,7 @@ melt_days <- rename(melt_days, Annual = variable,
 head(melt_days)
 
 ## save df
-write.csv(melt_days, "output_data/W4_F57C_willow_germ_depth_total_days_long.csv")
+write.csv(melt_days, "output_data/W4_F37B_Low_willow_germ_depth_total_days_long.csv")
 
 
 

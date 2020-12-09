@@ -79,7 +79,7 @@ hyd_sp<-reshape2::melt(hyd_sp, id=c("DateTime","Q", "node", "date_num", "month",
 ## filter data by cross section position
 new_dataM <- filter(hyd_sp, variable == "sp_w_MC")
 
-
+range(new_dataM$value)
 ## Main channel curve
 MC_curve <- spline(new_dataM$Q, new_dataM$value,
                    xmin = min(new_dataM$Q), xmax = max(new_dataM$Q), ties = mean)
