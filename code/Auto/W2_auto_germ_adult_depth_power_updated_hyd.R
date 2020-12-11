@@ -19,7 +19,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-
+n=1
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
 
@@ -115,11 +115,17 @@ for(n in 1: length(h)) {
   H_limits <- as.data.frame(matrix(ncol=length(positions), nrow=2)) 
   H_limits$Type<-c("Hydraulic_limit1", "Hydraulic_limit2")
   
+  ## calculation
+  Q_Calc <- as.data.frame(matrix(ncol=1, nrow=3 ))
+  
+  names(Q_Calc) <- "Thresh"
+  
+  
   time_statsx <- NULL
   days_data <- NULL
 
   # probability as a function of discharge -----------------------------------
-  
+  p=1
   for(p in 1:length(positions)) {
     
     new_data <- all_data %>% 
@@ -162,6 +168,7 @@ for(n in 1: length(h)) {
       distinct(water_year,  Seasonal) %>%
       mutate(position= paste(PositionName), Node = NodeName)
     
+    Q_Calc[p,] <- paste("Q >= newx1a")
     
     time_statsx <- rbind(time_statsx, time_stats)
     time_statsx
@@ -176,6 +183,13 @@ for(n in 1: length(h)) {
     
     
   } ## end 2nd loop
+  
+  Q_Calc$Position <- positions
+  
+  Q_Calc <- Q_Calc %>%
+    mutate(Species ="Willow", Life_Stage = "Germination", Hydraulic = "Depth", Node = NodeName)
+  
+  write.csv(Q_Calc, paste("output_data/W2_",NodeName,"_Willow_Germination_depth_Q_calculation_updated_hyd.csv", sep=""))
   
   ## limits
   limits <- rbind(limits, H_limits)
@@ -352,6 +366,10 @@ for(n in 1: length(h)) {
   H_limits <- as.data.frame(matrix(ncol=length(positions), nrow=2)) 
   H_limits$Type<-c("Hydraulic_limit1", "Hydraulic_limit2")
   
+  ## calculation
+  Q_Calc <- as.data.frame(matrix(ncol=1, nrow=3 ))
+  names(Q_Calc) <- "Thresh"
+  
   time_statsx <- NULL
   days_data <- NULL
 
@@ -377,17 +395,17 @@ for(n in 1: length(h)) {
     
     
     if(min(curve$y) ==0 && max(curve$y) ==0) {
-      newx2a <- 0
+      newx1a <- 0
     } else  if(max(curve$y)<4000) {
-      newx2a <- max(curve$x)
+      newx1a <- max(curve$x)
     } else {
-      newx2a <- approx(x = curve$y, y = curve$x, xout = 4000)$y
+      newx1a <- approx(x = curve$y, y = curve$x, xout = 4000)$y
     }
     
     
     
     ## MAKE DF OF Q LIMITS
-    limits[,p] <- c( newx2a)
+    limits[,p] <- c( newx1a)
     H_limits[, p] <- c(4000)
     
     # create year_month column       
@@ -402,17 +420,18 @@ for(n in 1: length(h)) {
     ###### calculate amount of time
     time_stats <- new_data %>%
       dplyr::group_by(water_year, season) %>%
-      dplyr::mutate(Seasonal = sum(Q <= newx2a)/length(DateTime)*100) %>%
+      dplyr::mutate(Seasonal = sum(Q <= newx1a)/length(DateTime)*100) %>%
       distinct(water_year,  Seasonal) %>%
       mutate(position= paste(PositionName), Node = NodeName)
     
+    Q_Calc[p,] <- paste("Q <= newx1a")
     
     time_statsx <- rbind(time_statsx, time_stats)
     
     ### count days per month
     new_datax <- new_datax %>% 
-      group_by(month, day, water_year, ID = data.table::rleid(Q <= newx2a)) %>%
-      mutate(threshold = if_else(Q <= newx2a,  row_number(), 0L)) %>%
+      group_by(month, day, water_year, ID = data.table::rleid(Q <= newx1a)) %>%
+      mutate(threshold = if_else(Q <= newx1a,  row_number(), 0L)) %>%
       mutate(position= paste(PositionName)) 
     
     
@@ -420,6 +439,13 @@ for(n in 1: length(h)) {
     
     
   } ## end 2nd loop
+  
+  Q_Calc$Position <- positions
+  
+  Q_Calc <- Q_Calc %>%
+    mutate(Species ="Willow", Life_Stage = "Adult", Hydraulic = "StreamPower", Node = NodeName)
+  
+  write.csv(Q_Calc, paste("output_data/W2_",NodeName,"_Willow_Adult_StreamPower_Q_calculation_updated_hyd.csv", sep=""))
   
   ## limits
   limits <- rbind(limits, H_limits)
