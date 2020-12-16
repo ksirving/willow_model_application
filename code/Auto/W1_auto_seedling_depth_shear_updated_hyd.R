@@ -35,10 +35,10 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 
 h <- list.files(pattern="predictions")
 length(h) ## 18
-
+h
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
-n=1
+n=9
 for(n in 1: length(h)) {
   
   NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
@@ -176,11 +176,11 @@ for(n in 1: length(h)) {
     
     
     if(min(new_data$prob_fit)>25) {
-      newx1a <- min(new_data$Q)
-      hy_lim1 <- min(new_data$depth_cm)
+      newx3a <- min(new_data$Q)
+      hy_lim3 <- min(new_data$depth_cm)
     } else {
-      newx1a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 25)
-      hy_lim1 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 25)
+      newx3a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 25)
+      hy_lim3 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 25)
     }
     
     newx2a  <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
@@ -194,23 +194,31 @@ for(n in 1: length(h)) {
       hy_lim2 <- hy_lim2
     }
     
-    newx3a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 75)
-    hy_lim3 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 75)
+    newx1a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 75)
+    hy_lim1 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 75)
     
     if(min(new_data$prob_fit)>75) {
-      newx3a <- min(new_data$Q)
-      hy_lim3 <- min(new_data$depth_cm)
+      newx1a <- min(new_data$Q)
+      hy_lim1 <- min(new_data$depth_cm)
     } else {
-      newx3a <- newx3a
-      hy_lim3 <- hy_lim3
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
     }
     
-    if(length(newx3a) > 4) {
-      newx3a <- c(newx3a[1], newx3a[length(newx3a)])
-      hy_lim3<- c(hy_lim3[1], hy_lim3[length(hy_lim3)])
+    if(max(new_data$prob_fit)<75) {
+      newx1a <- max(new_data$Q)
+      hy_lim1 <- max(new_data$depth_cm)
     } else {
-      newx3a <- newx3a
-      hy_lim3 <- hy_lim3
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
+    }
+    
+    if(length(newx1a) > 4) {
+      newx1a <- c(newx1a[1], newx1a[length(newx1a)])
+      hy_lim1<- c(hy_lim1[1], hy_lim1[length(hy_lim1)])
+    } else {
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
     }
     
     ## MAKE DF OF Q LIMITS
@@ -237,31 +245,35 @@ for(n in 1: length(h)) {
     ## produces percentage of time for each year and season within year for each threshold
     
     ## Main channel curves
+ 
     
+    low_thresh <- expression_Q(newx3a, peakQ) 
+    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx3a")))))
+    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(">=" = as.symbol("<=")))))
     
-    low_thresh <- expression_Q(newx1a, peakQ) 
-    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx1a")))))
     
     med_thresh <- expression_Q(newx2a, peakQ)
     med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(limit = as.name("newx2a")))))
+    med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(">=" = as.symbol("<=")))))
     
-    high_thresh <- expression_Q(newx3a, peakQ)
-    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(limit = as.name("newx3a")))))
+    high_thresh <- expression_Q(newx1a, peakQ)
+    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(limit = as.name("newx1a")))))
+    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(">=" = as.symbol("<=")))))
     
     Q_Calc[p,] <- c(paste(low_thresh), paste(med_thresh), paste(high_thresh))
     
     ###### calculate amount of time
-    
+   
     time_stats <- new_datax %>%
       dplyr::group_by(water_year) %>%
-      dplyr::mutate(High = sum(eval(low_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(Low = sum(eval(low_thresh))/length(DateTime)*100) %>%
       dplyr::mutate(Medium = sum(eval(med_thresh))/length(DateTime)*100) %>%
-      dplyr::mutate(Low = sum(eval(high_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(High = sum(eval(high_thresh))/length(DateTime)*100) %>%
       ungroup() %>%
       dplyr::group_by(water_year, season) %>%
-      dplyr::mutate(High.Seasonal = sum(eval(low_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(Low.Seasonal = sum(eval(low_thresh))/length(DateTime)*100) %>%
       dplyr::mutate(Medium.Seasonal = sum(eval(med_thresh))/length(DateTime)*100) %>%
-      dplyr::mutate(Low.Seasonal = sum(eval(high_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(High.Seasonal = sum(eval(high_thresh))/length(DateTime)*100) %>%
       distinct(water_year, Low , Medium , High , Low.Seasonal, Medium.Seasonal, High.Seasonal) %>%
       mutate(position= paste(PositionName), Node = NodeName)
     
@@ -271,13 +283,13 @@ for(n in 1: length(h)) {
     new_datax <- new_datax %>%
       ungroup() %>%
       group_by(month, day, water_year, ID01 = data.table::rleid(eval(low_thresh))) %>%
-      mutate(High = if_else(eval(low_thresh), row_number(), 0L)) %>%
+      mutate(Low = if_else(eval(low_thresh), row_number(), 0L)) %>%
       ungroup() %>%
       group_by(month, day, water_year, ID02 = data.table::rleid(eval(med_thresh))) %>%
       mutate(Medium = if_else(eval(med_thresh), row_number(), 0L)) %>%
       ungroup() %>%
       group_by(month, day, water_year, ID03 = data.table::rleid(eval(high_thresh))) %>%
-      mutate(Low = if_else(eval(high_thresh), row_number(), 0L)) %>%
+      mutate(High = if_else(eval(high_thresh), row_number(), 0L)) %>%
       mutate(position= paste(PositionName)) #%>%
     # select(Q, month, water_year, day, ID01, Low, ID02, Medium, ID03, High, position, DateTime, node) 
     
@@ -549,15 +561,15 @@ for(n in 1: length(h)) {
     
     
     if(min(new_data$prob_fit)>25) {
-      newx1a <- min(new_data$Q)
-      hy_lim1 <- min(new_data$depth_cm)
+      newx3a <- min(new_data$Q)
+      hy_lim3 <- min(new_data$depth_cm)
     } else {
-      newx1a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 25)
-      hy_lim1 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 25)
+      newx3a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 25)
+      hy_lim3 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 25)
     }
     
     newx2a  <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
-    hy_lim2 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 50)
+    hy_lim2 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 50)
     
     if(length(newx2a) > 4) {
       newx2a <- c(newx2a[1], newx2a[length(newx2a)])
@@ -567,23 +579,31 @@ for(n in 1: length(h)) {
       hy_lim2 <- hy_lim2
     }
     
-    newx3a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 75)
-    hy_lim3 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 75)
+    newx1a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 75)
+    hy_lim1 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 75)
     
     if(min(new_data$prob_fit)>75) {
-      newx3a <- min(new_data$Q)
-      hy_lim3 <- min(new_data$shear)
+      newx1a <- min(new_data$Q)
+      hy_lim1 <- min(new_data$depth_cm)
     } else {
-      newx3a <- newx3a
-      hy_lim3 <- hy_lim3
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
     }
     
-    if(length(newx3a) > 4) {
-      newx3a <- c(newx3a[1], newx3a[length(newx3a)])
-      hy_lim3<- c(hy_lim3[1], hy_lim3[length(hy_lim3)])
+    if(max(new_data$prob_fit)<75) {
+      newx1a <- max(new_data$Q)
+      hy_lim1 <- max(new_data$depth_cm)
     } else {
-      newx3a <- newx3a
-      hy_lim3 <- hy_lim3
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
+    }
+    
+    if(length(newx1a) > 4) {
+      newx1a <- c(newx1a[1], newx1a[length(newx1a)])
+      hy_lim1<- c(hy_lim1[1], hy_lim1[length(hy_lim1)])
+    } else {
+      newx1a <- newx1a
+      hy_lim1 <- hy_lim1
     }
     
     ## MAKE DF OF Q LIMITS
@@ -600,9 +620,8 @@ for(n in 1: length(h)) {
     
     # dataframe for stats -----------------------------------------------------
     
-    ## define critical period or season for Seedling
-    non_critical <- c(1:3, 10:12) 
-    critical <- c(4:9) 
+    non_critical <- c(1:3,10:12) ## winter months
+    critical <- c(4:9) ## summer months
     
     new_datax <- new_datax %>%
       mutate(season = ifelse(month %in% non_critical, "non_critical", "critical") )
@@ -613,29 +632,32 @@ for(n in 1: length(h)) {
     ## Main channel curves
     
     
-    low_thresh <- expression_Q(newx1a, peakQ) 
-    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx1a")))))
+    low_thresh <- expression_Q(newx3a, peakQ) 
+    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx3a")))))
+    low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(">=" = as.symbol("<=")))))
+    
     
     med_thresh <- expression_Q(newx2a, peakQ)
     med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(limit = as.name("newx2a")))))
+    med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(">=" = as.symbol("<=")))))
     
-    high_thresh <- expression_Q(newx3a, peakQ)
-    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(limit = as.name("newx3a")))))
+    high_thresh <- expression_Q(newx1a, peakQ)
+    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(limit = as.name("newx1a")))))
+    high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(">=" = as.symbol("<=")))))
     
     Q_Calc[p,] <- c(paste(low_thresh), paste(med_thresh), paste(high_thresh))
-    
     ###### calculate amount of time
     
     time_stats <- new_datax %>%
       dplyr::group_by(water_year) %>%
-      dplyr::mutate(High = sum(eval(low_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(Low = sum(eval(low_thresh))/length(DateTime)*100) %>%
       dplyr::mutate(Medium = sum(eval(med_thresh))/length(DateTime)*100) %>%
-      dplyr::mutate(Low = sum(eval(high_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(High = sum(eval(high_thresh))/length(DateTime)*100) %>%
       ungroup() %>%
       dplyr::group_by(water_year, season) %>%
-      dplyr::mutate(High.Seasonal = sum(eval(low_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(Low.Seasonal = sum(eval(low_thresh))/length(DateTime)*100) %>%
       dplyr::mutate(Medium.Seasonal = sum(eval(med_thresh))/length(DateTime)*100) %>%
-      dplyr::mutate(Low.Seasonal = sum(eval(high_thresh))/length(DateTime)*100) %>%
+      dplyr::mutate(High.Seasonal = sum(eval(high_thresh))/length(DateTime)*100) %>%
       distinct(water_year, Low , Medium , High , Low.Seasonal, Medium.Seasonal, High.Seasonal) %>%
       mutate(position= paste(PositionName), Node = NodeName)
     
@@ -645,13 +667,13 @@ for(n in 1: length(h)) {
     new_datax <- new_datax %>%
       ungroup() %>%
       group_by(month, day, water_year, ID01 = data.table::rleid(eval(low_thresh))) %>%
-      mutate(High = if_else(eval(low_thresh), row_number(), 0L)) %>%
+      mutate(Low = if_else(eval(low_thresh), row_number(), 0L)) %>%
       ungroup() %>%
       group_by(month, day, water_year, ID02 = data.table::rleid(eval(med_thresh))) %>%
       mutate(Medium = if_else(eval(med_thresh), row_number(), 0L)) %>%
       ungroup() %>%
       group_by(month, day, water_year, ID03 = data.table::rleid(eval(high_thresh))) %>%
-      mutate(Low = if_else(eval(high_thresh), row_number(), 0L)) %>%
+      mutate(High = if_else(eval(high_thresh), row_number(), 0L)) %>%
       mutate(position= paste(PositionName)) #%>%
     # select(Q, month, water_year, day, ID01, Low, ID02, Medium, ID03, High, position, DateTime, node) 
     
