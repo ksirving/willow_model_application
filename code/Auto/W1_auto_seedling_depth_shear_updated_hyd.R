@@ -92,7 +92,7 @@ for(n in 1: length(h)) {
   }
   
   
-  
+  max(hyd_dep$shear_pa_MC)
   ## take only depth variable
   hyd_dep <- hyd_dep %>% select(DateTime, node, Q, contains("depth"), date_num)
   head(hyd_dep)

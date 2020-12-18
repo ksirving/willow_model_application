@@ -18,14 +18,21 @@ head(shear)
 ######## seedling inudation curve from data predicting percent mortality from duration and depth Halsell et al and Vandersande et al
 
 
-names(shear)[c(1,4)] <- c("shear", "mortality")
-shear$year <- as.factor(shear$year)
+names(shear)[c(1,2, 4)] <- c("shear", "Year", "mortality")
+shear$Year <- as.factor(shear$Year)
+
+png("Figures/Seedling_Shear_colours.png", width = 600, height = 600)
+
 ggplot(data = shear, mapping = aes(x = shear, y = mortality))+
-  geom_point(size = 4)+
+  geom_point(aes( group = Year, color = Year), size = 4) +
+  # geom_point(size = 4)+
   geom_smooth(method = "lm")+
   labs(y = "Mortality (%)", x = "Bed Shear Stress (Pa)")+
   theme_classic()+
-  theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
+  theme(axis.text = element_text(size = 30), axis.title = element_text(size = 30), 
+        legend.text=element_text(size=20), legend.title=element_text(size=20))
+
+dev.off()
 
 summary(shear_seedling <- lm(mortality~shear, data = shear))
 
