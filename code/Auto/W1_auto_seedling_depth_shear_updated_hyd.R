@@ -22,7 +22,7 @@ library(scales)
 load(file="root_interpolation_function.Rdata")
 
 ## define root equation
-load(file="expression_Q_limit_function.RData")
+load(file="/Users/katieirving/Documents/git/willow_model_application/expression_Q_limit_function.RData")
 
 # Combine with hydraulic data -------------------------------------------
 
@@ -36,7 +36,10 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=1
+n=2
+min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
+colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
+min_limit_df
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
 
@@ -149,10 +152,11 @@ for(n in 1: length(h)) {
   Q_Calc <- as.data.frame(matrix(ncol=3, nrow=3 ))
   names(Q_Calc) <- c("Low", "Medium", "High")
   
-  
+  min_limit_df[n,"Node"] <- NodeName
+  min_limit_df
   time_statsx <- NULL
   days_data <- NULL
-p=3
+p=2
   # probability as a function of discharge -----------------------------------
   
   for(p in 1:length(positions)) {
@@ -163,7 +167,7 @@ p=3
     ## define position
     PositionName <- str_split(positions[p], "_", 3)[[1]]
     PositionName <- PositionName[3]
-    min(new_data$depth_cm)
+    
     
     peak <- new_data %>%
       filter(prob_fit == max(prob_fit)) #%>%
@@ -171,8 +175,9 @@ p=3
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_data, depth_cm >= 0.03)
     min_limit <- min(min_limit$Q)
-    min_limit
-    
+
+    min_limit_df[n, PositionName] <- min_limit
+
     ## find roots for each probability
     
     ## high mortality = low prob of occurrence
@@ -193,7 +198,7 @@ p=3
       hy_lim1 <- hy_lim1
     }
     
-    if(length(newx1a) > 4) {
+    if(length(newx1a) > 2) {
       newx1a <- c(newx1a[1], newx1a[length(newx1a)])
       hy_lim1<- c(hy_lim1[1], hy_lim1[length(hy_lim1)])
     } else {
@@ -218,7 +223,7 @@ p=3
       hy_lim2 <- hy_lim2
     }
     
-    if(length(newx2a) > 4) {
+    if(length(newx2a) > 2) {
       newx2a <- c(newx2a[1], newx2a[length(newx2a)])
       hy_lim2<- c(hy_lim2[1], hy_lim2[length(hy_lim2)])
     } else {
@@ -244,7 +249,7 @@ p=3
       hy_lim3 <- hy_lim3
     }
     
-    if(length(newx3a) > 4) {
+    if(length(newx3a) > 2) {
       newx3a <- c(newx3a[1], newx3a[length(newx3a)])
       hy_lim3<- c(hy_lim3[1], hy_lim3[length(hy_lim3)])
     } else {
@@ -255,8 +260,7 @@ p=3
     newx1a <- sort(newx1a, decreasing = T)
     newx2a <- sort(newx2a, decreasing = T)
     newx3a <- sort(newx3a, decreasing = T)
-    
-    newx1a
+
     
     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a[1], newx1a[2],newx1a[3], newx1a[4],
@@ -291,7 +295,7 @@ p=3
       low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(">=" = as.symbol("<=")))))
     }
     # low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(">=" = as.symbol("<=")))))
-    
+
     
     med_thresh <- expression_Q(newx2a, peakQ)
     med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(limit = as.name("newx2a")))))
@@ -449,6 +453,7 @@ p=3
   
 } ## end 1st loop
 
+write.csv(min_limit_df, "/Users/katieirving/Documents/git/flow_eco_mech/flow_recs/min_flow_limit_node_position.csv")
 
 # Shear ----------------------------------------------------------------
 
@@ -599,8 +604,6 @@ for(n in 1: length(h)) {
     
     colnames(new_dataD)[4] <- "depth_cm"
       
-   
-   
     
     ## bind shallow and deeper depths by 0.1 - 10cm & 120cm
     ## change all prob_fit lower than 0.1 to 0.1
@@ -612,28 +615,28 @@ for(n in 1: length(h)) {
     min_limit <- filter(new_dataD, depth_cm >0.03)
     min_limit <- min(min_limit$Q)
   
-    test <- subset(new_dataD, depth_cm >= 5)
+    # test <- subset(new_dataD, depth_cm >= 5)
     ## find roots for each probability
     
     ## high mortality = low prob of occurrence
     
     if(min(new_data$prob_fit)>75) {
       newx1a <- min(new_data$Q)
-      hy_lim1 <- min(new_data$depth_cm)
+      hy_lim1 <- min(new_data$shear)
     } else {
       newx1a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 75)
-      hy_lim1 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 75)
+      hy_lim1 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 75)
     }
     
     if(max(new_data$prob_fit)<75) {
       newx1a <- max(new_data$Q)
-      hy_lim1 <- max(new_data$depth_cm)
+      hy_lim1 <- max(new_data$shear)
     } else {
       newx1a <- newx1a
       hy_lim1 <- hy_lim1
     }
     
-    if(length(newx1a) > 4) {
+    if(length(newx1a) > 2) {
       newx1a <- c(newx1a[1], newx1a[length(newx1a)])
       hy_lim1<- c(hy_lim1[1], hy_lim1[length(hy_lim1)])
     } else {
@@ -644,21 +647,21 @@ for(n in 1: length(h)) {
     ## medium
     if(max(new_data$prob_fit)<50) {
       newx2a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$depth_cm)
+      hy_lim2 <- max(new_data$shear)
     } else {
       newx2a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
-      hy_lim2 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 50)
+      hy_lim2 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 50)
     }
     
     if(min(new_data$prob_fit)>50) {
       newx2a <- min(new_data$Q)
-      hy_lim2 <- min(new_data$depth_cm)
+      hy_lim2 <- min(new_data$shear)
     } else {
       newx2a <- newx2a
       hy_lim2 <- hy_lim2
     }
     
-    if(length(newx2a) > 4) {
+    if(length(newx2a) > 2) {
       newx2a <- c(newx2a[1], newx2a[length(newx2a)])
       hy_lim2<- c(hy_lim2[1], hy_lim2[length(hy_lim2)])
     } else {
@@ -670,21 +673,21 @@ for(n in 1: length(h)) {
     ## low mortality = high prob of occurrence
     if(min(new_data$prob_fit)>25) {
       newx3a <- min(new_data$Q)
-      hy_lim3 <- min(new_data$depth_cm)
+      hy_lim3 <- min(new_data$shear)
     } else {
       newx3a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 25)
-      hy_lim3 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 25)
+      hy_lim3 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 25)
     }
     
     if(max(new_data$prob_fit)<25) {
       newx3a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$depth_cm)
+      hy_lim2 <- max(new_data$shear)
     } else {
       newx3a <- newx3a
       hy_lim3 <- hy_lim3
     }
     
-    if(length(newx3a) > 4) {
+    if(length(newx3a) > 2) {
       newx3a <- c(newx3a[1], newx3a[length(newx3a)])
       hy_lim3<- c(hy_lim3[1], hy_lim3[length(hy_lim3)])
     } else {
@@ -695,8 +698,7 @@ for(n in 1: length(h)) {
     newx1a <- sort(newx1a, decreasing = T)
     newx2a <- sort(newx2a, decreasing = T)
     newx3a <- sort(newx3a, decreasing = T)
-    
-    newx1a
+  
     
     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a[1], newx1a[2],newx1a[3], newx1a[4],
@@ -722,7 +724,7 @@ for(n in 1: length(h)) {
     ## produces percentage of time for each year and season within year for each threshold
     
     ## Main channel curves
-    
+   
     
     low_thresh <- expression_Q(newx1a, peakQ) 
     low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx1a")))))
@@ -747,6 +749,7 @@ for(n in 1: length(h)) {
     if(length(newx3a)==1) {
       high_thresh <-as.expression(do.call("substitute", list(high_thresh[[1]], list(">=" = as.symbol("<=")))))
     }
+    
     Q_Calc[p,] <- c(paste(low_thresh), paste(med_thresh), paste(high_thresh))
     ###### calculate amount of time
     

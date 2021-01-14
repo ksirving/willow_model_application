@@ -125,7 +125,7 @@ for(n in 1: length(h)) {
   days_data <- NULL
 
   # probability as a function of discharge -----------------------------------
-  p=1
+
   for(p in 1:length(positions)) {
     
     new_data <- all_data %>% 
@@ -148,13 +148,9 @@ for(n in 1: length(h)) {
       newx1a <- approx(x = curve$y, y = curve$x, xout = 5)$y
     }
     newx1a <- approx(x = curve$y, y = curve$x, xout = 5)$y
-    newx1a
-    min(curve$y)
-    min(new_data$value)
-    head(new_data)
-    test <- subset(new_data, value >= 5)
+  
     
-    is ## MAKE DF OF Q LIMITS
+     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a)
     H_limits[, p] <- 5
     
