@@ -123,7 +123,7 @@ for(n in 1: length(h)) {
   
   time_statsx <- NULL
   days_data <- NULL
-
+p=1
   # probability as a function of discharge -----------------------------------
 
   for(p in 1:length(positions)) {

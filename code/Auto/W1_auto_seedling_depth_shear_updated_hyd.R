@@ -36,7 +36,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=2
+n=6
 min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
 colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
@@ -156,7 +156,7 @@ for(n in 1: length(h)) {
   min_limit_df
   time_statsx <- NULL
   days_data <- NULL
-p=2
+p=3
   # probability as a function of discharge -----------------------------------
   
   for(p in 1:length(positions)) {
@@ -175,9 +175,9 @@ p=2
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_data, depth_cm >= 0.03)
     min_limit <- min(min_limit$Q)
-
+    min_limit
     min_limit_df[n, PositionName] <- min_limit
-
+    min_limit <- filter(new_data, depth_cm > 0)
     ## find roots for each probability
     
     ## high mortality = low prob of occurrence
@@ -469,7 +469,7 @@ length(h) ## 18
 h
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
-n=1
+n=6
 n
 for(n in 1: length(h)) {
   
@@ -520,6 +520,9 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
+  
+  
+  test <- filter(hyd_shear, shear_pa_LOB > 0)
   
   # take only depth variable for min limit
   hyd_dep <- hyd_shear %>% select(DateTime, node, Q, contains("depth"), date_num)
@@ -614,7 +617,8 @@ for(n in 1: length(h)) {
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_dataD, depth_cm >0.03)
     min_limit <- min(min_limit$Q)
-  
+    
+    min_limit <- filter(new_data, shear >0.0)
     # test <- subset(new_dataD, depth_cm >= 5)
     ## find roots for each probability
     

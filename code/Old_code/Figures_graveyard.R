@@ -318,7 +318,7 @@ new_dataL <- mutate(new_dataL, position="LOB")
 file_name = paste("figures/Application_curves/Depth/", NodeName, "_SAS_adult_depth_prob_Q_thresholds_updated_hyd.png", sep ="")
 
 png(file_name, width = 500, height = 600)
-
+head(new_data)
 ggplot(new_data, aes(x = Q, y=prob_fit)) +
   geom_line(aes(group = variable, lty = variable)) +
   scale_linetype_manual(values= c("dotted", "solid", "dashed"))+
@@ -353,8 +353,8 @@ ggplot(new_data, aes(x = Q, y=prob_fit)) +
   # geom_point(data = subset(all_data, variable =="depth_cm_LOB"), aes(y=0.3, x=limits[11,1]), color="blue") +
   # geom_point(data = subset(all_data, variable =="depth_cm_LOB"), aes(y=0.3, x=limits[12,1]), color="blue") +
   # 
-  geom_point(data = subset(new_data, variable =="depth_cm_ROB"), aes(y=50, x=newx2a[1]), color="green") +
-  geom_point(data = subset(new_data, variable =="depth_cm_ROB"), aes(y=50, x=newx2a[2]), color="green") +
+  # geom_point(data = subset(new_data, variable =="depth_cm_ROB"), aes(y=50, x=newx2a[1]), color="green") +
+  # geom_point(data = subset(new_data, variable =="depth_cm_ROB"), aes(y=50, x=newx2a[2]), color="green") +
   # geom_point(data = subset(all_data, variable =="depth_cm_ROB"), aes(y=0.1, x=limits[3,3]), color="green") +
   # geom_point(data = subset(all_data, variable =="depth_cm_ROB"), aes(y=0.1, x=limits[4,3]), color="green") +
   # geom_point(data = subset(all_data, variable =="depth_cm_ROB"), aes(y=0.2, x=limits[5,3]), color="red") +
