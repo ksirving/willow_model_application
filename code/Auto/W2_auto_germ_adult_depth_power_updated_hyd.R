@@ -19,7 +19,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=3
+n=1
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
 
@@ -73,9 +73,9 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
-  
+  head(hyd_dep)
   ## take only depth variable
-  hyd_dep <- hyd_vel %>% select(DateTime, node, Q, contains("depth"), date_num)
+  hyd_dep <- hyd_dep %>% select(DateTime, node, Q, contains("depth"), date_num)
   
   # ## melt channel position data
   hyd_dep<-reshape2::melt(hyd_dep, id=c("DateTime","Q", "node", "date_num"))
@@ -107,7 +107,7 @@ for(n in 1: length(h)) {
   
   ## define positions
   positions <- unique(all_data$variable)
-  
+  positions
   ## Q limits
   limits <- as.data.frame(matrix(ncol=length(positions), nrow=2)) 
   limits$Type<-c("Q_limit1", "Q_limit2")
@@ -147,10 +147,14 @@ for(n in 1: length(h)) {
     } else {
       newx1a <- approx(x = curve$y, y = curve$x, xout = 5)$y
     }
-  
+    newx1a <- approx(x = curve$y, y = curve$x, xout = 5)$y
+    newx1a
+    min(curve$y)
+    min(new_data$value)
+    head(new_data)
+    test <- subset(new_data, value >= 5)
     
-    
-    ## MAKE DF OF Q LIMITS
+    is ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a)
     H_limits[, p] <- 5
     
