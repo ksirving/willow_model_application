@@ -36,7 +36,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=9
+n=17
 min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
 colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
@@ -469,15 +469,19 @@ length(h) ## 18
 h
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
-n=6
+n=17
 n
 for(n in 1: length(h)) {
   
   NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
+  # NodeData <- read.csv("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas/LA202Jan_predictions.csv")
   F34D <- read.csv("input_data/HecRas/hydraulic_ts_F34D.csv") ## for dates
+  
+  
   
   NodeName <- str_split(h[n], "_", 3)[[1]]
   NodeName <- NodeName[1]
+  NodeName
   ## format hydraulic data
   cat(paste("Running Node", NodeName))
   
@@ -543,7 +547,8 @@ for(n in 1: length(h)) {
   
   all_data <- hyd_shear %>%
     mutate(prob_fit = predict(shear_seedling, newdata = hyd_shear, type="response")) %>%
-    mutate(prob_fit = ifelse(prob_fit<=0, 0, prob_fit)) ## predicts negative percentages - cut off at 0 for quick fix
+    mutate(prob_fit = ifelse(prob_fit<=0, 0, prob_fit)) %>% ## predicts negative percentages - cut off at 0 for quick fix
+    mutate(prob_fit = ifelse(prob_fit>100, 100, prob_fit)) ## predicts negative percentages - cut off at 0 for quick fix
   
   ## save out
   save(all_data, file=paste("output_data/W1_", NodeName, "_Willow_Seedling_Shear_discharge_probability_updated_hyd.RData", sep=""))
@@ -587,7 +592,7 @@ for(n in 1: length(h)) {
   time_statsx <- NULL
   days_data <- NULL
   # positions
-
+p=1
   # head(new_data)
   # probability as a function of discharge -----------------------------------
   
@@ -605,9 +610,8 @@ for(n in 1: length(h)) {
     
     colnames(new_dataD)[4] <- "depth_cm"
       
-    
-    ## bind shallow and deeper depths by 0.1 - 10cm & 120cm
-    ## change all prob_fit lower than 0.1 to 0.1
+    # plot(new_dataD$depth_cm, new_data$shear)
+
     
     peak <- new_data %>%
       filter(prob_fit == max(prob_fit)) #%>%
@@ -615,8 +619,8 @@ for(n in 1: length(h)) {
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_dataD, depth_cm >0.03)
     min_limit <- min(min_limit$Q)
-    
-    min_limit <- filter(new_data, shear >0.0)
+    min_limit
+    # min_limit <- filter(new_data, shear >0.0)
     # test <- subset(new_dataD, depth_cm >= 5)
     ## find roots for each probability
     
@@ -700,7 +704,7 @@ for(n in 1: length(h)) {
     newx1a <- sort(newx1a, decreasing = T)
     newx2a <- sort(newx2a, decreasing = T)
     newx3a <- sort(newx3a, decreasing = T)
-  
+    newx3a
     
     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a[1], newx1a[2],newx1a[3], newx1a[4],
