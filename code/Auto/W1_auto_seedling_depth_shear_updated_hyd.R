@@ -36,7 +36,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=6
+n=9
 min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
 colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
@@ -96,10 +96,10 @@ for(n in 1: length(h)) {
   }
   
   
-  max(hyd_dep$shear_pa_MC)
+
   ## take only depth variable
   hyd_dep <- hyd_dep %>% select(DateTime, node, Q, contains("depth"), date_num)
-  head(hyd_dep)
+
   # ## melt channel position data
   hyd_dep<-reshape2::melt(hyd_dep, id=c("DateTime","Q", "node", "date_num"))
   hyd_dep <- hyd_dep %>% rename(depth_cm = value)
@@ -153,12 +153,12 @@ for(n in 1: length(h)) {
   names(Q_Calc) <- c("Low", "Medium", "High")
   
   min_limit_df[n,"Node"] <- NodeName
-  min_limit_df
+
   time_statsx <- NULL
   days_data <- NULL
-p=3
+
   # probability as a function of discharge -----------------------------------
-  
+  p=3
   for(p in 1:length(positions)) {
     
     new_data <- all_data %>% 
@@ -175,9 +175,9 @@ p=3
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_data, depth_cm >= 0.03)
     min_limit <- min(min_limit$Q)
-    min_limit
+
     min_limit_df[n, PositionName] <- min_limit
-    min_limit <- filter(new_data, depth_cm > 0)
+
     ## find roots for each probability
     
     ## high mortality = low prob of occurrence
@@ -191,15 +191,15 @@ p=3
     }
     
     if(max(new_data$prob_fit)<75) {
-      newx1a <- max(new_data$Q)
-      hy_lim1 <- max(new_data$depth_cm)
+      newx1a <- NA
+      hy_lim1 <- NA
     } else {
       newx1a <- newx1a
       hy_lim1 <- hy_lim1
     }
     
-    if(length(newx1a) > 2) {
-      newx1a <- c(newx1a[1], newx1a[length(newx1a)])
+    if(length(newx1a) > 1) {
+      newx1a <- c(newx1a[length(newx1a)])
       hy_lim1<- c(hy_lim1[1], hy_lim1[length(hy_lim1)])
     } else {
       newx1a <- newx1a
@@ -208,8 +208,8 @@ p=3
     
     ## medium
     if(max(new_data$prob_fit)<50) {
-      newx2a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$depth_cm)
+      newx2a <- NA
+      hy_lim2 <- NA
     } else {
       newx2a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
       hy_lim2 <- RootLinearInterpolant(new_data$depth_cm, new_data$prob_fit, 50)
@@ -223,8 +223,8 @@ p=3
       hy_lim2 <- hy_lim2
     }
     
-    if(length(newx2a) > 2) {
-      newx2a <- c(newx2a[1], newx2a[length(newx2a)])
+    if(length(newx2a) > 1) {
+      newx2a <- c(newx2a[length(newx2a)])
       hy_lim2<- c(hy_lim2[1], hy_lim2[length(hy_lim2)])
     } else {
       newx2a <- newx2a
@@ -242,15 +242,15 @@ p=3
     }
     
     if(max(new_data$prob_fit)<25) {
-      newx3a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$depth_cm)
+      newx3a <- NA
+      hy_lim2 <- NA
     } else {
       newx3a <- newx3a
       hy_lim3 <- hy_lim3
     }
     
-    if(length(newx3a) > 2) {
-      newx3a <- c(newx3a[1], newx3a[length(newx3a)])
+    if(length(newx3a) > 1) {
+      newx3a <- c(newx3a[length(newx3a)])
       hy_lim3<- c(hy_lim3[1], hy_lim3[length(hy_lim3)])
     } else {
       newx3a <- newx3a
@@ -287,7 +287,7 @@ p=3
     
     ## Main channel curves
  
-    
+
     low_thresh <- expression_Q(newx1a, peakQ) 
     low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(limit = as.name("newx1a")))))
     ## change symbol if only 1 value
@@ -296,7 +296,7 @@ p=3
     }
     # low_thresh <-as.expression(do.call("substitute", list(low_thresh[[1]], list(">=" = as.symbol("<=")))))
 
-    
+
     med_thresh <- expression_Q(newx2a, peakQ)
     med_thresh <-as.expression(do.call("substitute", list(med_thresh[[1]], list(limit = as.name("newx2a")))))
     ## change symbol if only 1 value
@@ -522,7 +522,7 @@ for(n in 1: length(h)) {
   }
   
   
-  test <- filter(hyd_shear, shear_pa_LOB > 0)
+
   
   # take only depth variable for min limit
   hyd_dep <- hyd_shear %>% select(DateTime, node, Q, contains("depth"), date_num)
@@ -534,9 +534,7 @@ for(n in 1: length(h)) {
   
   # ## melt channel position data
   hyd_shear<-reshape2::melt(hyd_shear, id=c("DateTime","Q", "node", "date_num"))
-  head(hyd_shear)
 
-  head(hyd_dep)
   
   hyd_shear <- hyd_shear %>%
     # filter(variable %in% c("shear_pa_LOB", "shear_pa_MC", "shear_pa_ROB")) %>%
@@ -589,7 +587,7 @@ for(n in 1: length(h)) {
   time_statsx <- NULL
   days_data <- NULL
   # positions
-  p=3
+
   # head(new_data)
   # probability as a function of discharge -----------------------------------
   
@@ -633,8 +631,8 @@ for(n in 1: length(h)) {
     }
     
     if(max(new_data$prob_fit)<75) {
-      newx1a <- max(new_data$Q)
-      hy_lim1 <- max(new_data$shear)
+      newx1a <- NA
+      hy_lim1 <- NA
     } else {
       newx1a <- newx1a
       hy_lim1 <- hy_lim1
@@ -650,8 +648,8 @@ for(n in 1: length(h)) {
     
     ## medium
     if(max(new_data$prob_fit)<50) {
-      newx2a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$shear)
+      newx2a <- NA
+      hy_lim2 <- NA
     } else {
       newx2a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
       hy_lim2 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 50)
@@ -684,8 +682,8 @@ for(n in 1: length(h)) {
     }
     
     if(max(new_data$prob_fit)<25) {
-      newx3a <- max(new_data$Q)
-      hy_lim2 <- max(new_data$shear)
+      newx3a <-NA
+      hy_lim2 <- NA
     } else {
       newx3a <- newx3a
       hy_lim3 <- hy_lim3
