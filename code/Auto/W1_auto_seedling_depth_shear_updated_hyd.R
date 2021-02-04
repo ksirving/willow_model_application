@@ -36,7 +36,7 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech/input_data/HecRas")
 h <- list.files(pattern="predictions")
 length(h) ## 18
 h
-n=17
+n=16
 min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
 colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
@@ -158,7 +158,7 @@ for(n in 1: length(h)) {
   days_data <- NULL
 
   # probability as a function of discharge -----------------------------------
-  p=3
+  p=1
   for(p in 1:length(positions)) {
     
     new_data <- all_data %>% 
@@ -175,7 +175,7 @@ for(n in 1: length(h)) {
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_data, depth_cm >= 3)
     min_limit <- min(min_limit$Q)
-
+    min_limit
     min_limit_df[n, PositionName] <- min_limit
 
     ## find roots for each probability
@@ -260,7 +260,7 @@ for(n in 1: length(h)) {
     newx1a <- sort(newx1a, decreasing = T)
     newx2a <- sort(newx2a, decreasing = T)
     newx3a <- sort(newx3a, decreasing = T)
-
+    newx3a
     
     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a[1], newx1a[2],newx1a[3], newx1a[4],
@@ -469,7 +469,7 @@ length(h) ## 18
 h
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
-n=17
+n=7
 n
 for(n in 1: length(h)) {
   
@@ -600,7 +600,7 @@ p=1
     
     new_data <- all_data %>% 
       filter(variable  == positions[p])
-    
+    PositionName
     ## define position
     PositionName <- str_split(positions[p], "_", 3)[[1]]
     PositionName <- PositionName[3]
@@ -615,11 +615,12 @@ p=1
     
     peak <- new_data %>%
       filter(prob_fit == max(prob_fit)) #%>%
-    
+    # head(new_data)
     peakQ  <- max(peak$Q)
     min_limit <- filter(new_dataD, depth_cm >=3)
+    # min_limit2 <- filter(new_data, shear > 0)
     min_limit <- min(min_limit$Q)
-    min_limit
+   
     # min_limit <- filter(new_data, shear >0.0)
     # test <- subset(new_dataD, depth_cm >= 5)
     ## find roots for each probability
@@ -652,8 +653,8 @@ p=1
     
     ## medium
     if(max(new_data$prob_fit)<50) {
-      newx2a <- NA
-      hy_lim2 <- NA
+      newx2a <- max(new_data$Q)
+      hy_lim2 <- max(new_data$shear)
     } else {
       newx2a <- RootLinearInterpolant(new_data$Q, new_data$prob_fit, 50)
       hy_lim2 <- RootLinearInterpolant(new_data$shear, new_data$prob_fit, 50)
@@ -675,7 +676,7 @@ p=1
       hy_lim2 <- hy_lim2
     }
     
-    
+ 
     ## low mortality = high prob of occurrence
     if(min(new_data$prob_fit)>25) {
       newx3a <- min(new_data$Q)
@@ -705,7 +706,8 @@ p=1
     newx2a <- sort(newx2a, decreasing = T)
     newx3a <- sort(newx3a, decreasing = T)
     newx3a
-    
+  
+    hy_lim2
     ## MAKE DF OF Q LIMITS
     limits[,p] <- c(newx1a[1], newx1a[2],newx1a[3], newx1a[4],
                     newx2a[1], newx2a[2],newx2a[3], newx2a[4], 
