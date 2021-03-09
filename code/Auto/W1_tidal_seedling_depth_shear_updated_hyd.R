@@ -30,10 +30,7 @@ load(file="/Users/katieirving/Documents/git/willow_model_application/expression_
 load(file="/Users/katieirving/Documents/git/willow_model_application/models/depth_seedling_mod.rda")
 
 all_na <- function(x) any(!is.na(x))
-## upload habitat curve data
-fitdata <- read.csv("output_data/old_data/adult_depth_prob_curve_data.csv")
-# fitdata <- read.csv("output_data/old_data/juvenile_depth_prob_curve_data.csv")
-head(fitdata)
+
 ## upload hydraulic data
 ## tidal
 setwd("/Users/katieirving/SCCWRP/LA River Eflows Study - General/Data/RawData/Results_Hydraulics/Tidal_LA1LA2/Baseline/results-hydraulics_postprocessed")
