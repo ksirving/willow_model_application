@@ -91,9 +91,9 @@ for(n in 1: length(h)) {
       mutate(shear_pa_LOB = (Shear..lb.sq.ft..LOB/0.020885),
              shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885),
              shear_pa_ROB = (Shear..lb.sq.ft..ROB/0.020885)) %>%
-      mutate(sp_w_LOB = (Shear..lb.sq.ft..LOB*4.44822)/0.3048,
-             sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048,
-             sp_w_ROB = (Shear..lb.sq.ft..ROB*4.44822)/0.3048) %>%
+      mutate(sp_w_LOB = (Stream.Power..lb.ft.s..LOB*4.44822)/0.3048,
+             sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048,
+             sp_w_ROB = (Stream.Power..lb.ft.s..ROB*4.44822)/0.3048) %>%
       mutate(vel_m_LOB = (Avg..Vel...ft.s..LOB*0.3048),
              vel_m_MC = (Avg..Vel...ft.s..MC*0.3048),
              vel_m_ROB = (Avg..Vel...ft.s..ROB*0.3048)) %>%
@@ -101,7 +101,6 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
-  
 
   ## take only depth variable
   hyd_dep <- hyd_dep %>% select(DateTime, node, Q, contains("depth"), date_num)
@@ -518,9 +517,9 @@ for(n in 1: length(h)) {
       mutate(shear_pa_LOB = (Shear..lb.sq.ft..LOB/0.020885),
              shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885),
              shear_pa_ROB = (Shear..lb.sq.ft..ROB/0.020885)) %>%
-      mutate(sp_w_LOB = (Shear..lb.sq.ft..LOB*4.44822)/0.3048,
-             sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048,
-             sp_w_ROB = (Shear..lb.sq.ft..ROB*4.44822)/0.3048) %>%
+      mutate(sp_w_LOB = (Stream.Power..lb.ft.s..LOB*4.44822)/0.3048,
+             sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048,
+             sp_w_ROB = (Stream.Power..lb.ft.s..ROB*4.44822)/0.3048) %>%
       mutate(vel_m_LOB = (Avg..Vel...ft.s..LOB*0.3048),
              vel_m_MC = (Avg..Vel...ft.s..MC*0.3048),
              vel_m_ROB = (Avg..Vel...ft.s..ROB*0.3048)) %>%
@@ -528,7 +527,6 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
-  
   
   
 

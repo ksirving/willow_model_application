@@ -29,18 +29,15 @@ load(file="/Users/katieirving/Documents/git/willow_model_application/expression_
 ## depth model
 load(file="/Users/katieirving/Documents/git/willow_model_application/models/depth_seedling_mod.rda")
 
-all_na <- function(x) any(!is.na(x))
-## upload habitat curve data
-fitdata <- read.csv("output_data/old_data/adult_depth_prob_curve_data.csv")
-# fitdata <- read.csv("output_data/old_data/juvenile_depth_prob_curve_data.csv")
-head(fitdata)
 ## upload hydraulic data
-## tidal
-setwd("/Users/katieirving/SCCWRP/LA River Eflows Study - General/Data/RawData/Results_Hydraulics/Tidal_LA1LA2/Baseline/results-hydraulics_postprocessed")
-dir <- "/Users/katieirving/SCCWRP/LA River Eflows Study - General/Data/RawData/Results_Hydraulics/Tidal_LA1LA2/Baseline/results-hydraulics_postprocessed/"
+setwd("/Users/katieirving/Documents/git/flow_eco_mech")
+## upload hydraulic data
+setwd("input_data/HecRas")
+
 h <- list.files(pattern="predictions")
-length(h) ## 20
+length(h) ## 18
 h
+
 min_limit_df <- as.data.frame(matrix(ncol=4, nrow=length(h)))
 colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
@@ -49,14 +46,8 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech")
 
 for(n in 1: length(h)) {
   
-  # NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
-  NodeData <- read.csv(file=paste(dir, h[n], sep=""))
-  ## remove columns all NAs
-  NodeData <- NodeData %>% select_if(all_na) 
-  head(NodeData)
-  dim(NodeData)
-  # F34D <- read.csv("input_data/HecRas/hydraulic_ts_F34D.csv") ## for dates
-  
+  NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
+  F34D <- read.csv("input_data/HecRas/hydraulic_ts_F34D.csv") ## for dates
   NodeName <- str_split(h[n], "_", 3)[[1]]
   NodeName <- NodeName[1]
   ## format hydraulic data
@@ -64,25 +55,24 @@ for(n in 1: length(h)) {
   
   cat(paste("Running Node", NodeName))
   
-  # NodeData <- NodeData %>%
-  #   mutate(DateTime = F34D$Q_ts.datetime)
+  NodeData <- NodeData %>%
+    mutate(DateTime = F34D$Q_ts.datetime)
   
-  hydraul <-NodeData
+  hydraul <-NodeData[,-1]
   
   ## change some names
   hydraul <- hydraul %>%
     rename(Q = Flow) %>%
     mutate(node = NodeName)
   
-  names(hydraul)
-  dim(hydraul)
+  
   ## convert units and change names - depending on concrete/soft bottom. if/else to determine changes to data
   
-  if(length(hydraul) == 13) {
+  if(length(hydraul) == 8) {
     hyd_dep <- hydraul %>%
       mutate(depth_cm_MC = (Max..Depth..ft..MC*0.3048)*100) %>%
       mutate(shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885)) %>%
-      mutate(sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048) %>%
+      mutate(sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048) %>%
       mutate(vel_m_MC = (Avg..Vel...ft.s..MC*0.3048)) %>%
       select(-contains("ft")) %>%
       mutate(date_num = seq(1,length(DateTime), 1))
@@ -94,9 +84,9 @@ for(n in 1: length(h)) {
       mutate(shear_pa_LOB = (Shear..lb.sq.ft..LOB/0.020885),
              shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885),
              shear_pa_ROB = (Shear..lb.sq.ft..ROB/0.020885)) %>%
-      mutate(sp_w_LOB = (Shear..lb.sq.ft..LOB*4.44822)/0.3048,
-             sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048,
-             sp_w_ROB = (Shear..lb.sq.ft..ROB*4.44822)/0.3048) %>%
+      mutate(sp_w_LOB = (Stream.Power..lb.ft.s..LOB*4.44822)/0.3048,
+             sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048,
+             sp_w_ROB = (Stream.Power..lb.ft.s..ROB*4.44822)/0.3048) %>%
       mutate(vel_m_LOB = (Avg..Vel...ft.s..LOB*0.3048),
              vel_m_MC = (Avg..Vel...ft.s..MC*0.3048),
              vel_m_ROB = (Avg..Vel...ft.s..ROB*0.3048)) %>%
@@ -104,6 +94,7 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
+  
   
 
   ## take only depth variable
@@ -476,14 +467,8 @@ setwd("/Users/katieirving/Documents/git/flow_eco_mech")
 
 for(n in 1: length(h)) {
   
-  # NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
-  NodeData <- read.csv(file=paste(dir, h[n], sep=""))
-  ## remove columns all NAs
-  NodeData <- NodeData %>% select_if(all_na) 
-  head(NodeData)
-  dim(NodeData)
-  # F34D <- read.csv("input_data/HecRas/hydraulic_ts_F34D.csv") ## for dates
-  
+  NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
+  F34D <- read.csv("input_data/HecRas/hydraulic_ts_F34D.csv") ## for dates
   NodeName <- str_split(h[n], "_", 3)[[1]]
   NodeName <- NodeName[1]
   ## format hydraulic data
@@ -491,25 +476,24 @@ for(n in 1: length(h)) {
   
   cat(paste("Running Node", NodeName))
   
-  # NodeData <- NodeData %>%
-  #   mutate(DateTime = F34D$Q_ts.datetime)
+  NodeData <- NodeData %>%
+    mutate(DateTime = F34D$Q_ts.datetime)
   
-  hydraul <-NodeData
+  hydraul <-NodeData[,-1]
   
   ## change some names
   hydraul <- hydraul %>%
     rename(Q = Flow) %>%
     mutate(node = NodeName)
   
-  names(hydraul)
-  dim(hydraul)
+  
   ## convert units and change names - depending on concrete/soft bottom. if/else to determine changes to data
   
-  if(length(hydraul) == 13) {
+  if(length(hydraul) == 8) {
     hyd_shear <- hydraul %>%
       mutate(depth_cm_MC = (Max..Depth..ft..MC*0.3048)*100) %>%
       mutate(shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885)) %>%
-      mutate(sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048) %>%
+      mutate(sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048) %>%
       mutate(vel_m_MC = (Avg..Vel...ft.s..MC*0.3048)) %>%
       select(-contains("ft")) %>%
       mutate(date_num = seq(1,length(DateTime), 1))
@@ -521,9 +505,9 @@ for(n in 1: length(h)) {
       mutate(shear_pa_LOB = (Shear..lb.sq.ft..LOB/0.020885),
              shear_pa_MC = (Shear..lb.sq.ft..MC/0.020885),
              shear_pa_ROB = (Shear..lb.sq.ft..ROB/0.020885)) %>%
-      mutate(sp_w_LOB = (Shear..lb.sq.ft..LOB*4.44822)/0.3048,
-             sp_w_MC = (Shear..lb.sq.ft..MC*4.44822)/0.3048,
-             sp_w_ROB = (Shear..lb.sq.ft..ROB*4.44822)/0.3048) %>%
+      mutate(sp_w_LOB = (Stream.Power..lb.ft.s..LOB*4.44822)/0.3048,
+             sp_w_MC = (Stream.Power..lb.ft.s..MC*4.44822)/0.3048,
+             sp_w_ROB = (Stream.Power..lb.ft.s..ROB*4.44822)/0.3048) %>%
       mutate(vel_m_LOB = (Avg..Vel...ft.s..LOB*0.3048),
              vel_m_MC = (Avg..Vel...ft.s..MC*0.3048),
              vel_m_ROB = (Avg..Vel...ft.s..ROB*0.3048)) %>%
@@ -531,6 +515,7 @@ for(n in 1: length(h)) {
       mutate(date_num = seq(1,length(DateTime), 1))
     
   }
+  
   
   
   
