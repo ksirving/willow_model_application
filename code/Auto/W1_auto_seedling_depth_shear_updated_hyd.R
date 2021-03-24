@@ -43,7 +43,7 @@ colnames(min_limit_df) <- c("Node", "LOB", "MC", "ROB")
 min_limit_df
 ## set wd back to main
 setwd("/Users/katieirving/Documents/git/flow_eco_mech")
-
+n=5
 for(n in 1: length(h)) {
   
   NodeData <- read.csv(file=paste("input_data/HecRas/", h[n], sep=""))
@@ -59,7 +59,7 @@ for(n in 1: length(h)) {
     mutate(DateTime = F34D$Q_ts.datetime)
   
   hydraul <-NodeData[,-1]
-  
+  # head(hydraul)
   ## change some names
   hydraul <- hydraul %>%
     rename(Q = Flow) %>%
